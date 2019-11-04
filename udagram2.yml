@@ -199,6 +199,84 @@ Resources:
             RouteTableId: !Ref PrivateRouteTable2
             SubnetId: !Ref PrivateSubnet2
 
+    NoIngressSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+          GroupName: "no-ingress-sg"
+          GroupDescription: "Security group with no ingress rule"
+          VpcId: !Ref VPC
+      
+    WebServerSecGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Allow http to client host
+        VpcId: !Ref VPC
+        SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+    WebAppTargetGroup:
+      Type: AWS::ElasticLoadBalancingV2::TargetGroup
+      Properties:
+        HealthCheckIntervalSeconds: 35
+        HealthCheckPath: /
+        HealthCheckProtocol: HTTP
+        HealthCheckTimeoutSeconds: 30
+        HealthyThresholdCount: 2
+        Port: 80
+        Protocol: HTTP
+        UnhealthyThresholdCount: 5
+        VpcId: 
+          Fn::ImportValue:
+            Fn::Sub: "${EnvironmentName}-VPCID"
+
+    # instace profile contains the IAM Role name(s) that we want to associate to our auto scaling EC2 Servers
+    # ProfileWithRolesForOurApp:
+    #   Type: AWS::IAM::InstanceProfile
+    #   Properties: 
+    #     Roles:
+    #       - UdacityS3ReadOnlyEC2
+    
+    #         #!/bin/bash
+    #         apt-get update -y
+    #         apt-get install unzip awscli -y
+    #         apt-get install apache2 -y
+    #         systemctl start apache2.service
+    #         cd /var/www/html
+    #         aws s3 cp s3://udacity-demo-1/udacity.zip .
+    #         unzip -o udacity.zip
+
+    WebAppLaunchConfig:
+      Type: AWS::AutoScaling::LaunchConfiguration
+      Properties:
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            apt-get update -y
+            apt-get install unzip awscli -y
+            apt-get install apache2 -y
+            systemctl start apache2.service
+            cd /var/www/html
+            aws s3 cp s3://udacity-demo-1/udacity.zip .
+            unzip -o udacity.zip
+        ImageId: ami-005bdb005fb00e791
+        #IamInstanceProfile: !Ref ProfileWithRolesForOurApp
+        SecurityGroups:
+        - Ref: WebServerSecGroup
+        InstanceType: t3.small
+        BlockDeviceMappings:
+        - DeviceName: "/dev/sdk"
+          Ebs:
+            VolumeSize: '10'
+
+
 Outputs: 
 
     VPC: 
