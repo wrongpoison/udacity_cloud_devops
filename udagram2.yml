@@ -201,12 +201,19 @@ Resources:
           GroupName: "no-ingress-sg"
           GroupDescription: "Security group with no ingress rule"
           VpcId: !Ref VPC
+          Tags: 
+                - Key: Name 
+                  Value: !Sub ${EnvironmentName} No ingress security group
+
       
     WebServerSecGroup:
       Type: AWS::EC2::SecurityGroup
       Properties:
         GroupDescription: Allow http to client host
         VpcId: !Ref VPC
+        Tags: 
+                - Key: Name 
+                  Value: !Sub ${EnvironmentName} Web server security group
         SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
