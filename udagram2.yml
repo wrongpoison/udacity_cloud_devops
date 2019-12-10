@@ -283,8 +283,9 @@ Resources:
             cd /var/www/html
             aws s3 cp s3://udacity-demo-1/udacity.zip .
             unzip -o udacity.zip
+        #ubuntu 18.04
         ImageId: ami-06d51e91cea0dac8d
-        #IamInstanceProfile: !Ref ProfileWithRolesForOurApp
+        IamInstanceProfile: !Ref ProfileWithRolesForOurApp
         SecurityGroups:
         - Ref: WebServerSecGroup
         #two vCPUs and at least 4GB of RAM = t3.medium
