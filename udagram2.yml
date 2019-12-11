@@ -298,6 +298,43 @@ Resources:
           Ebs:
             VolumeSize: '10'
 
+    # Auto-scaling group
+
+    #Loadbalancer
+    WebAppLB:
+        Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+        Properties:
+            Subnets: 
+            - !Ref PublicSubnet2
+            - !Ref PublicSubnet1
+            SecurityGroups:
+            - Ref: LoadBalancerSecurityGroup
+
+    #Listener
+    Listener:
+        Type: AWS::ElasticLoadBalancingV2::Listener
+        Properties:
+            DefaultActions:
+            - Type: forward
+              TargetGroupArn:
+                Ref: WebAppTargetGroup
+            LoadBalancerArn: !Ref WebAppLB
+            Port: 80
+            Protocol: HTTP
+
+    #Listener rule
+    AppLBListenerRule:
+        Type: AWS::ElasticLoadBalancingV2::ListenerRule
+        Properties:
+            Actions:
+            - Type: forward
+              TargetGroupArn: !Ref 'WebAppTargetGroup'
+            Conditions:
+            - Field: path-pattern
+              Values: [/]
+            ListenerArn: !Ref 'Listener'
+            Priority: 1
+
 
 Outputs: 
 
@@ -360,3 +397,7 @@ Outputs:
         Value: !Ref PrivateSubnet2
         Export:
           Name: !Sub ${EnvironmentName}-PRI2-SN
+
+    # LoadBalancerURL:
+    #     Description: "Public URL of load balancer"
+    #     Value: !Join ["", ["http://", !GetAtt WebAppLB.DNSName]]
