@@ -299,6 +299,18 @@ Resources:
             VolumeSize: '10'
 
     # Auto-scaling group
+    WebAppGroup:
+        Type: AWS::AutoScaling::AutoScalingGroup
+        Properties:
+            VPCZoneIdentifier:
+                - !Ref PrivateSubnet1
+                - !Ref PrivateSubnet2
+            LaunchConfigurationName:
+                Ref: WebAppLaunchConfig
+            MinSize: 4
+            MaxSize: 4
+            TargetGroupARNs:
+                - Ref: WebAppTargetGroup
 
     #Loadbalancer
     WebAppLB:
