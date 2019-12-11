@@ -195,25 +195,30 @@ Resources:
             RouteTableId: !Ref PrivateRouteTable2
             SubnetId: !Ref PrivateSubnet2
 
-    NoIngressSecurityGroup:
+    LoadBalancerSecurityGroup:
         Type: AWS::EC2::SecurityGroup
         Properties:
-          GroupName: "no-ingress-sg"
-          GroupDescription: "Security group with no ingress rule"
+          GroupName: "load balancer sec group"
+          GroupDescription: "Allow http traffic to load balancer"
           VpcId: !Ref VPC
-          Tags: 
-                - Key: Name 
-                  Value: !Sub ${EnvironmentName} No ingress security group
+          SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: 80
+            ToPort: 80
+            CidrIp: 0.0.0.0/0
+          SecurityGroupEgress:
+          - IpProtocol: tcp
+            FromPort: 80
+            ToPort: 80
+            CidrIp: 0.0.0.0/0
+        
 
       
-    WebServerSecGroup:
+    WebServerSecurityGroup:
       Type: AWS::EC2::SecurityGroup
       Properties:
-        GroupDescription: Allow http to client host
+        GroupDescription: Allow http to web servers.
         VpcId: !Ref VPC
-        Tags: 
-                - Key: Name 
-                  Value: !Sub ${EnvironmentName} Web server security group
         SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
@@ -221,8 +226,8 @@ Resources:
           CidrIp: 0.0.0.0/0
         SecurityGroupEgress:
         - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
+          FromPort: 0
+          ToPort: 65535
           CidrIp: 0.0.0.0/0
 
     WebAppTargetGroup:
@@ -236,9 +241,7 @@ Resources:
         Port: 80
         Protocol: HTTP
         UnhealthyThresholdCount: 5
-        VpcId: 
-          Fn::ImportValue:
-            Fn::Sub: "${EnvironmentName}-VPCID"
+        VpcId: !Ref VPC
     
     UdacityS3ReadOnlyEC2:
         Type: 'AWS::IAM::Role'
@@ -287,7 +290,7 @@ Resources:
         ImageId: ami-06d51e91cea0dac8d
         IamInstanceProfile: !Ref ProfileWithRolesForOurApp
         SecurityGroups:
-        - Ref: WebServerSecGroup
+        - Ref: WebServerSecurityGroup
         #two vCPUs and at least 4GB of RAM = t3.medium
         InstanceType: t3.medium
         BlockDeviceMappings:
